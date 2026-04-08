@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 Memoria - Psicología Positiva</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&family=Lora:wght@500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f0f1a;
+            --surface: #1a1a2e;
+            --accent: #e94560;
+            --gold: #f5a623;
+            --teal: #00b4d8;
+            --green: #06d6a0;
+            --red: #ef233c;
+            --purple: #c77dff;
+            --text: #eaeaea;
+            --text-muted: #8a8a9a;
+            --card-border: #2e2e5a;
+            --radius: 14px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text);
+            padding: 24px 16px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(233,69,96,0.12) 0%, transparent 55%),
+                radial-gradient(ellipse at 80% 80%, rgba(0,180,216,0.10) 0%, transparent 55%),
+                radial-gradient(ellipse at 50% 50%, rgba(199,125,255,0.06) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .wrapper {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        /* ── HEADER ── */
+        header {
+            text-align: center;
+            margin-bottom: 28px;
+            animation: fadeDown 0.7s ease both;
+        }
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .title {
+            font-family: 'Lora', serif;
+            font-size: clamp(1.6rem, 4vw, 2.8rem);
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+        .title span { color: var(--accent); }
+
+        .subtitle {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .stat {
+            background: var(--surface);
+            border: 1px solid var(--card-border);
+            border-radius: 50px;
+            padding: 8px 20px;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .stat-val { color: var(--gold); font-size: 1.15rem; }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-80px);
+            background: var(--surface);
+            border: 1px solid var(--card-border);
+            border-radius: 50px;
+            padding: 12px 28px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            z-index: 9999;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .toast.show  { transform: translateX(-50%) translateY(0); }
+        .toast.ok    { border-color: var(--green);  color: var(--green); }
+        .toast.bad   { border-color: var(--red);    color: var(--red); }
+        .toast.win   { border-color: var(--gold);   color: var(--gold); font-size: 1.3rem; }
+        .toast.bonus { border-color: var(--purple); color: var(--purple); }
+
+        /* ── CONTROLES ── */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            padding: 10px 26px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { filter: brightness(1.15); transform: translateY(-2px); }
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+        }
+        .btn-ghost:hover { border-color: var(--teal); color: var(--teal); }
+
+        /* ── TABLERO ── */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        /* ── CARTA ── */
+        .card {
+            height: 160px;
+            cursor: pointer;
+            perspective: 900px;
+            animation: popIn 0.4s ease both;
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.85); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card.flipped .card-inner { transform: rotateY(180deg); }
+
+        .card.matched {
+            opacity: 0.35;
+            pointer-events: none;
+            cursor: default;
+        }
+
+        .card-face {
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius);
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            overflow: hidden;
+        }
+
+        /* Dorso estándar */
+        .card-front {
+            background: var(--surface);
+            border: 1px solid var(--card-border);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .card:not(.matched):not(.flipped) .card-front:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 18px rgba(233,69,96,0.25);
+        }
+        .card-icon  { font-size: 2.4rem; margin-bottom: 6px; line-height: 1; }
+        .card-hint  { font-size: 0.72rem; color: var(--text-muted); text-align: center; }
+
+        /* Dorso bonus destacado */
+        .card-front.bonus-front {
+            background: linear-gradient(135deg, #2a0a3a 0%, #1a0a2e 100%);
+            border: 1px solid rgba(199,125,255,0.5);
+        }
+        .card:not(.matched):not(.flipped) .card-front.bonus-front:hover {
+            border-color: var(--purple);
+            box-shadow: 0 0 22px rgba(199,125,255,0.45);
+        }
+        .card-front.bonus-front .card-hint { color: var(--purple); }
+
+        /* Cara TÉRMINO */
+        .card-back.term {
+            background: linear-gradient(135deg, #0f3460 0%, #1a237e 100%);
+            border: 1px solid rgba(0,180,216,0.35);
+            transform: rotateY(180deg);
+        }
+        .card-back.term .label {
+            font-size: 0.62rem; font-weight: 700; letter-spacing: 1.5px;
+            color: var(--teal); text-transform: uppercase; margin-bottom: 8px;
+        }
+        .card-back.term .content {
+            font-family: 'Lora', serif; font-size: 0.88rem; font-weight: 600;
+            text-align: center; color: #fff; line-height: 1.4;
+        }
+
+        /* Cara CONCEPTO */
+        .card-back.concept {
+            background: linear-gradient(135deg, #1a2a1a 0%, #0d2b1d 100%);
+            border: 1px solid rgba(6,214,160,0.35);
+            transform: rotateY(180deg);
+        }
+        .card-back.concept .label {
+            font-size: 0.62rem; font-weight: 700; letter-spacing: 1.5px;
+            color: var(--green); text-transform: uppercase; margin-bottom: 8px;
+        }
+        .card-back.concept .content {
+            font-size: 0.78rem; text-align: center;
+            color: #d4f7ec; line-height: 1.4;
+        }
+
+        /* Cara BONUS */
+        .card-back.bonus {
+            background: linear-gradient(135deg, #3a0a5a 0%, #1f0a3a 100%);
+            border: 1px solid rgba(199,125,255,0.5);
+            transform: rotateY(180deg);
+        }
+        .card-back.bonus .bonus-emoji { font-size: 2rem; margin-bottom: 6px; line-height: 1; }
+        .card-back.bonus .bonus-name  { font-family:'Lora',serif; font-size:0.82rem; font-weight:600; color:var(--purple); text-align:center; margin-bottom:6px; }
+        .card-back.bonus .bonus-rule  { font-size:0.68rem; color:#d4b8f7; text-align:center; line-height:1.35; }
+
+        /* Shake */
+        .card.shake { animation: shake 0.45s ease; }
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            20%     { transform: translateX(-8px); }
+            40%     { transform: translateX(8px); }
+            60%     { transform: translateX(-5px); }
+            80%     { transform: translateX(5px); }
+        }
+
+        /* ── PROGRESO ── */
+        .progress-bar {
+            width: 100%; height: 6px;
+            background: var(--surface); border-radius: 3px;
+            margin-bottom: 20px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--teal));
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* ══════════════════════════════════════
+           MODAL BONUS
+        ══════════════════════════════════════ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.78);
+            backdrop-filter: blur(5px);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: #12022a;
+            border: 1px solid rgba(199,125,255,0.55);
+            border-radius: 22px;
+            padding: 32px 28px 26px;
+            max-width: 530px;
+            width: 100%;
+            animation: modalIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-timer {
+            position: absolute;
+            top: 18px; right: 20px;
+            font-size: 0.85rem; font-weight: 700; color: var(--text-muted);
+        }
+        .modal-timer span { color: var(--gold); font-size: 1.1rem; }
+        .modal-timer span.urgent { color: var(--red); }
+
+        .modal-badge {
+            display: inline-block;
+            background: rgba(199,125,255,0.12);
+            border: 1px solid var(--purple);
+            color: var(--purple);
+            font-size: 0.68rem; font-weight: 700;
+            letter-spacing: 2px; text-transform: uppercase;
+            padding: 4px 14px; border-radius: 50px;
+            margin-bottom: 14px;
+        }
+
+        .modal-emoji  { font-size: 2.8rem; display: block; margin-bottom: 6px; }
+        .modal-title  { font-family:'Lora',serif; font-size:1.45rem; color:var(--purple); margin-bottom:6px; font-weight:600; }
+        .modal-rule   { font-size:0.85rem; color:var(--text-muted); margin-bottom:20px; line-height:1.5; }
+        .modal-rule strong { color: var(--gold); }
+
+        .modal-question {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 15px 17px;
+            font-size: 0.97rem; font-weight: 700;
+            color: var(--text); line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .modal-options { display: flex; flex-direction: column; gap: 9px; margin-bottom: 14px; }
+
+        .opt-btn {
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.88rem; font-weight: 600;
+            padding: 11px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+            color: var(--text);
+            cursor: pointer; text-align: left;
+            transition: all 0.18s;
+        }
+        .opt-btn:hover:not(:disabled) {
+            background: rgba(199,125,255,0.15);
+            border-color: var(--purple);
+            color: var(--purple);
+            transform: translateX(5px);
+        }
+        .opt-btn.correct { background:rgba(6,214,160,0.18); border-color:var(--green); color:var(--green); }
+        .opt-btn.wrong   { background:rgba(239,35,60,0.18);  border-color:var(--red);   color:var(--red); }
+        .opt-btn:disabled { cursor: default; }
+
+        .modal-feedback {
+            text-align: center; font-size: 1.05rem; font-weight: 700;
+            min-height: 26px; margin-bottom: 14px;
+        }
+        .modal-feedback.ok  { color: var(--green); }
+        .modal-feedback.bad { color: var(--red); }
+
+        .modal-continue {
+            display: none; width: 100%;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1rem; font-weight: 700;
+            padding: 12px; border-radius: 10px;
+            border: none; background: var(--purple);
+            color: #fff; cursor: pointer;
+            transition: filter 0.2s;
+        }
+        .modal-continue:hover { filter: brightness(1.15); }
+        .modal-continue.show  { display: block; }
+
+        /* ── WIN SCREEN ── */
+        .win-screen { display: none; text-align: center; padding: 40px 20px; animation: fadeDown 0.6s ease; }
+        .win-screen.show { display: block; }
+        .win-screen h2 { font-family:'Lora',serif; font-size:clamp(1.8rem,5vw,3rem); color:var(--gold); margin-bottom:12px; }
+        .win-screen p  { color:var(--text-muted); font-size:1.05rem; margin-bottom:8px; }
+        .final-score   { font-size:4rem; font-weight:900; color:var(--gold); display:block; margin:16px 0; }
+        .win-breakdown { display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin:16px 0 26px; }
+        .wb-item       { background:var(--surface); border:1px solid var(--card-border); border-radius:12px; padding:10px 20px; font-size:0.88rem; color:var(--text-muted); }
+        .wb-item strong{ color:var(--text); display:block; font-size:1.3rem; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 600px) {
+            .board { grid-template-columns: repeat(3,1fr); gap:8px; }
+            .card  { height: 130px; }
+        }
+        @media (max-width: 380px) {
+            .board { grid-template-columns: repeat(2,1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══ MODAL BONUS ══ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-timer">⏱ <span id="timerVal">15</span>s</div>
+    <div class="modal-badge">✨ Carta Bonus</div>
+    <span class="modal-emoji" id="modalEmoji">🎉</span>
+    <div class="modal-title"  id="modalTitle">BONUS</div>
+    <div class="modal-rule"   id="modalRule"></div>
+    <div class="modal-question" id="modalQuestion"></div>
+    <div class="modal-options"  id="modalOptions"></div>
+    <div class="modal-feedback" id="modalFeedback"></div>
+    <button class="modal-continue" id="modalContinue" onclick="closeModal()">Continuar jugando →</button>
+  </div>
+</div>
+
+<div class="wrapper">
+    <header>
+        <h1 class="title">🧠 Memoria <span>Positiva</span></h1>
+        <p class="subtitle">Empareja términos con conceptos · ¡Cuidado con las cartas bonus!</p>
+        <div class="stats">
+            <div class="stat">⭐ Puntos    <span class="stat-val" id="score">0</span></div>
+            <div class="stat">🎯 Parejas  <span class="stat-val" id="matches">0</span> / <span class="stat-val" id="total">10</span></div>
+            <div class="stat">🟣 Bonus    <span class="stat-val" id="bonusCount">0</span> / 5</div>
+            <div class="stat">🔄 Intentos <span class="stat-val" id="attempts">0</span></div>
+        </div>
+    </header>
+
+    <div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+
+    <div class="controls">
+        <button class="btn btn-primary" onclick="resetGame()">🔄 Nueva partida</button>
+        <button class="btn btn-ghost"   onclick="toggleHelp()">💡 Instrucciones</button>
+    </div>
+
+    <div id="helpBox" style="display:none; background:var(--surface); border:1px solid var(--card-border); border-radius:var(--radius); padding:16px 20px; margin-bottom:20px; font-size:0.9rem; color:var(--text-muted); line-height:1.9;">
+        🔵 <strong style="color:var(--teal)">Términos</strong> y 🟢 <strong style="color:var(--green)">Conceptos</strong> se emparejan entre sí.<br>
+        ✅ Pareja correcta → <strong style="color:var(--gold)">+5 puntos</strong><br>
+        ❌ Pareja incorrecta → <strong style="color:var(--red)">-2 puntos</strong><br>
+        🟣 <strong style="color:var(--purple)">Carta Bonus</strong> → se activa sola y lanza una pregunta:<br>
+        &nbsp;&nbsp;&nbsp;· Respuesta correcta → <strong style="color:var(--gold)">+10 puntos</strong><br>
+        &nbsp;&nbsp;&nbsp;· Incorrecta o tiempo agotado → <strong style="color:var(--red)">-10 puntos</strong>
+    </div>
+
+    <div class="board" id="board"></div>
+
+    <div class="win-screen" id="winScreen">
+        <h2>🏆 ¡Completaste el juego!</h2>
+        <p>Todas las parejas encontradas</p>
+        <span class="final-score" id="finalScore">0 pts</span>
+        <div class="win-breakdown">
+            <div class="wb-item"><strong id="wbPairs">0</strong>Parejas</div>
+            <div class="wb-item"><strong id="wbBonus">0/5</strong>Bonus acertados</div>
+            <div class="wb-item"><strong id="wbAttempts">0</strong>Intentos</div>
+        </div>
+        <p id="winMsg"></p>
+        <br>
+        <button class="btn btn-primary" onclick="resetGame()">🔄 Jugar de nuevo</button>
+    </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  DATOS
+// ══════════════════════════════════════════════════════
+const PAIRS = [
+    { id:1,  term:"Psicología positiva",       concept:"Rama que estudia el bienestar, emociones positivas y el funcionamiento óptimo del ser humano." },
+    { id:2,  term:"Modelo PERMA",              concept:"Bienestar explicado por: Emociones positivas, Compromiso, Relaciones, Significado y Logros." },
+    { id:3,  term:"Emociones positivas",       concept:"Sentimientos como alegría, gratitud o amor que contribuyen a la satisfacción con la vida." },
+    { id:4,  term:"Flujo (Flow)",              concept:"Estado mental de concentración total y disfrute pleno durante una actividad." },
+    { id:5,  term:"Fortalezas del carácter",   concept:"Rasgos positivos como valentía, creatividad o bondad que favorecen el desarrollo personal." },
+    { id:6,  term:"Resiliencia",               concept:"Capacidad de adaptarse y recuperarse ante situaciones adversas." },
+    { id:7,  term:"Crecimiento postraumático", concept:"Desarrollo personal positivo que surge tras enfrentar experiencias difíciles." },
+    { id:8,  term:"Bienestar",                 concept:"Estado de satisfacción y equilibrio emocional en la vida de una persona." },
+    { id:9,  term:"Mindfulness",               concept:"Práctica de atención plena al momento presente de manera intencional y sin juicios." },
+    { id:10, term:"Gratitud",                  concept:"Reconocimiento y valoración de las cosas positivas que ocurren en la vida." },
+];
+
+const BONUS_CARDS = [
+    {
+        id:'b1', emoji:'🎉', name:'BONUS',
+        rule:'Respuesta correcta <strong>+10 puntos</strong> · Incorrecta o tiempo agotado <strong>-10 puntos</strong>',
+        question:'¿Cuál de estas letras NO pertenece al modelo PERMA?',
+        options:['P – Emociones Positivas','E – Compromiso','R – Relaciones','D – Descanso'],
+        correct:3
+    },
+    {
+        id:'b2', emoji:'⚡', name:'CARTA SORPRESA',
+        rule:'Ganas o pierdes <strong>10 puntos</strong> según tu respuesta',
+        question:'¿Quién es el padre fundador de la Psicología Positiva moderna?',
+        options:['Sigmund Freud','Abraham Maslow','Martin Seligman','Carl Rogers'],
+        correct:2
+    },
+    {
+        id:'b3', emoji:'🧠', name:'DESAFÍO EXTRA',
+        rule:'Respuesta correcta suma <strong>+10 puntos</strong> · Incorrecta resta <strong>-10</strong>',
+        question:'El concepto de "Flow" o Flujo fue descrito por primera vez por:',
+        options:['Mihaly Csikszentmihalyi','Daniel Kahneman','Barbara Fredrickson','Albert Bandura'],
+        correct:0
+    },
+    {
+        id:'b4', emoji:'🎯', name:'RIESGO',
+        rule:'<strong>+10</strong> si aciertas · <strong>-10</strong> si fallas',
+        question:'¿Cuál de estas NO es una emoción positiva según la teoría de Ampliar y Construir de Fredrickson?',
+        options:['Alegría','Serenidad','Miedo','Asombro'],
+        correct:2
+    },
+    {
+        id:'b5', emoji:'🔥', name:'TODO O NADA',
+        rule:'Puedes ganar <strong>10 puntos</strong> o perder <strong>10</strong>',
+        question:'La resiliencia en psicología positiva se refiere a:',
+        options:[
+            'Nunca experimentar emociones negativas',
+            'Adaptarse y recuperarse ante la adversidad',
+            'Ignorar los problemas para mantener el optimismo',
+            'Depender del apoyo externo para superar dificultades'
+        ],
+        correct:1
+    },
+];
+
+// ══════════════════════════════════════════════════════
+//  ESTADO
+// ══════════════════════════════════════════════════════
+let cards    = [];
+let flipped  = [];
+let matched  = new Set();
+let score    = 0;
+let attempts = 0;
+let bonusHit = 0;
+let isLocked = false;
+
+let timerInterval   = null;
+let timerVal        = 15;
+let pendingBonusIdx = null;
+
+// ══════════════════════════════════════════════════════
+//  UTILIDADES
+// ══════════════════════════════════════════════════════
+function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function toast(msg, type = 'ok', ms = 2000) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `toast ${type} show`;
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.className = 'toast'; }, ms);
+}
+
+function updateStats() {
+    document.getElementById('score').textContent      = score;
+    document.getElementById('matches').textContent    = matched.size / 2;
+    document.getElementById('attempts').textContent   = attempts;
+    document.getElementById('bonusCount').textContent = bonusHit;
+    const pct = (matched.size / 2) / PAIRS.length * 100;
+    document.getElementById('progress').style.width   = pct + '%';
+}
+
+// ══════════════════════════════════════════════════════
+//  BUILD & RENDER
+// ══════════════════════════════════════════════════════
+function buildCards() {
+    cards = [];
+    PAIRS.forEach(p => {
+        cards.push({ type:'term',    pairId:p.id, content:p.term    });
+        cards.push({ type:'concept', pairId:p.id, content:p.concept });
+    });
+    BONUS_CARDS.forEach(b => {
+        cards.push({ type:'bonus', bonusData:b });
+    });
+    cards = shuffle(cards);
+}
+
+function render() {
+    const board = document.getElementById('board');
+    board.innerHTML = '';
+    document.getElementById('total').textContent = PAIRS.length;
+
+    cards.forEach((card, idx) => {
+        const el = document.createElement('div');
+        el.className = 'card' + (matched.has(idx) ? ' matched' : '');
+        el.dataset.idx = idx;
+
+        if (card.type === 'bonus') {
+            const b = card.bonusData;
+            el.innerHTML = `
+              <div class="card-inner">
+                <div class="card-face card-front bonus-front">
+                  <div class="card-icon">🟣</div>
+                  <div class="card-hint">Carta especial</div>
+                </div>
+                <div class="card-face card-back bonus">
+                  <div class="bonus-emoji">${b.emoji}</div>
+                  <div class="bonus-name">${b.name}</div>
+                  <div class="bonus-rule">±10 puntos</div>
+                </div>
+              </div>`;
+        } else {
+            const isT  = card.type === 'term';
+            el.innerHTML = `
+              <div class="card-inner">
+                <div class="card-face card-front">
+                  <div class="card-icon">${isT ? '🔵' : '🟢'}</div>
+                  <div class="card-hint">${isT ? 'Término' : 'Concepto'}</div>
+                </div>
+                <div class="card-face card-back ${card.type}">
+                  <div class="label">${isT ? '📌 Término' : '💡 Concepto'}</div>
+                  <div class="content">${card.content}</div>
+                </div>
+              </div>`;
+        }
+
+        el.addEventListener('click', () => handleClick(idx));
+        board.appendChild(el);
+    });
+
+    updateStats();
+}
+
+// ══════════════════════════════════════════════════════
+//  LÓGICA PRINCIPAL
+// ══════════════════════════════════════════════════════
+function handleClick(idx) {
+    if (isLocked) return;
+    if (matched.has(idx)) return;
+    if (flipped.includes(idx)) return;
+    if (flipped.length >= 2) return;
+
+    const card = cards[idx];
+    const el   = document.querySelector(`.card[data-idx="${idx}"]`);
+    el.classList.add('flipped');
+
+    // ── Carta BONUS → abre modal después de mostrar su cara ──
+    if (card.type === 'bonus') {
+        isLocked = true;
+        pendingBonusIdx = idx;
+        attempts++;
+        updateStats();
+        setTimeout(() => openBonusModal(card.bonusData, idx), 750);
+        return;
+    }
+
+    // ── Carta normal ──
+    flipped.push(idx);
+    if (flipped.length === 2) {
+        isLocked = true;
+        attempts++;
+        updateStats();
+        setTimeout(checkPair, 1000);
+    }
+}
+
+function checkPair() {
+    const [i1, i2] = flipped;
+    const c1 = cards[i1], c2 = cards[i2];
+
+    const ok =
+        c1.pairId === c2.pairId &&
+        ((c1.type==='term' && c2.type==='concept') ||
+         (c1.type==='concept' && c2.type==='term'));
+
+    if (ok) {
+        matched.add(i1); matched.add(i2);
+        score += 5;
+        toast('✅ ¡Correcto! +5 puntos', 'ok');
+        document.querySelector(`.card[data-idx="${i1}"]`).classList.add('matched');
+        document.querySelector(`.card[data-idx="${i2}"]`).classList.add('matched');
+        flipped = []; isLocked = false;
+        updateStats();
+        checkWin();
+    } else {
+        score = Math.max(0, score - 2);
+        toast('❌ No coinciden. -2 puntos', 'bad');
+        const e1 = document.querySelector(`.card[data-idx="${i1}"]`);
+        const e2 = document.querySelector(`.card[data-idx="${i2}"]`);
+        e1.classList.add('shake'); e2.classList.add('shake');
+        setTimeout(() => {
+            e1.classList.remove('flipped','shake');
+            e2.classList.remove('flipped','shake');
+            flipped = []; isLocked = false;
+            updateStats();
+        }, 750);
+    }
+}
+
+function checkWin() {
+    // Gana cuando todas las PAREJAS están emparejadas
+    // (las bonus se marcan como matched al responderse)
+    const totalNonBonus = PAIRS.length * 2;
+    const matchedNonBonus = [...matched].filter(i => cards[i].type !== 'bonus').length;
+    if (matchedNonBonus === totalNonBonus) setTimeout(showWin, 600);
+}
+
+// ══════════════════════════════════════════════════════
+//  MODAL BONUS
+// ══════════════════════════════════════════════════════
+function openBonusModal(b, cardIdx) {
+    document.getElementById('modalEmoji').textContent    = b.emoji;
+    document.getElementById('modalTitle').textContent    = b.name;
+    document.getElementById('modalRule').innerHTML       = b.rule;
+    document.getElementById('modalQuestion').textContent = b.question;
+    document.getElementById('modalFeedback').textContent = '';
+    document.getElementById('modalFeedback').className   = 'modal-feedback';
+    document.getElementById('modalContinue').className   = 'modal-continue';
+
+    // Opciones
+    const optDiv = document.getElementById('modalOptions');
+    optDiv.innerHTML = '';
+    const letters = ['A','B','C','D'];
+    b.options.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className   = 'opt-btn';
+        btn.textContent = `${letters[i]}. ${opt}`;
+        btn.onclick     = () => answerBonus(i, b, cardIdx);
+        optDiv.appendChild(btn);
+    });
+
+    // Temporizador
+    timerVal = 15;
+    document.getElementById('timerVal').textContent = timerVal;
+    document.getElementById('timerVal').className   = '';
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        timerVal--;
+        const tv = document.getElementById('timerVal');
+        tv.textContent = timerVal;
+        if (timerVal <= 5) tv.className = 'urgent';
+        if (timerVal <= 0) {
+            clearInterval(timerInterval);
+            timeOutBonus(b.correct, cardIdx);
+        }
+    }, 1000);
+
+    document.getElementById('modalOverlay').classList.add('show');
+}
+
+function answerBonus(chosen, b, cardIdx) {
+    clearInterval(timerInterval);
+    disableOpts();
+
+    const opts = document.querySelectorAll('.opt-btn');
+    const fb   = document.getElementById('modalFeedback');
+
+    if (chosen === b.correct) {
+        opts[chosen].classList.add('correct');
+        score += 10; bonusHit++;
+        fb.textContent = '🎉 ¡Correcto! +10 puntos';
+        fb.className   = 'modal-feedback ok';
+        toast(`${b.emoji} ¡Bonus acertado! +10 pts`, 'bonus', 2500);
+    } else {
+        opts[chosen].classList.add('wrong');
+        opts[b.correct].classList.add('correct');
+        score = Math.max(0, score - 10);
+        fb.textContent = '❌ Incorrecto. -10 puntos';
+        fb.className   = 'modal-feedback bad';
+        toast(`${b.emoji} Bonus fallado. -10 pts`, 'bad', 2500);
+    }
+
+    updateStats();
+    finishBonus(cardIdx);
+}
+
+function timeOutBonus(correct, cardIdx) {
+    disableOpts();
+    document.querySelectorAll('.opt-btn')[correct].classList.add('correct');
+    score = Math.max(0, score - 10);
+    const fb = document.getElementById('modalFeedback');
+    fb.textContent = '⏱ ¡Tiempo agotado! -10 puntos';
+    fb.className   = 'modal-feedback bad';
+    toast('⏱ Tiempo agotado. -10 pts', 'bad', 2500);
+    updateStats();
+    finishBonus(cardIdx);
+}
+
+function disableOpts() {
+    document.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
+}
+
+function finishBonus(cardIdx) {
+    matched.add(cardIdx);
+    document.querySelector(`.card[data-idx="${cardIdx}"]`).classList.add('matched');
+    pendingBonusIdx = null;
+    document.getElementById('modalContinue').className = 'modal-continue show';
+}
+
+function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('show');
+    clearInterval(timerInterval);
+    flipped  = [];
+    isLocked = false;
+    updateStats();
+    checkWin();
+}
+
+// ══════════════════════════════════════════════════════
+//  WIN SCREEN
+// ══════════════════════════════════════════════════════
+function showWin() {
+    document.getElementById('board').style.display    = 'none';
+    document.querySelector('.controls').style.display = 'none';
+    document.getElementById('progress').parentElement.style.display = 'none';
+
+    const ws = document.getElementById('winScreen');
+    ws.classList.add('show');
+    document.getElementById('finalScore').textContent  = score + ' pts';
+    document.getElementById('wbPairs').textContent     = PAIRS.length;
+    document.getElementById('wbBonus').textContent     = bonusHit + '/5';
+    document.getElementById('wbAttempts').textContent  = attempts;
+
+    const perfect = PAIRS.length * 5 + BONUS_CARDS.length * 10;
+    let msg = '';
+    if      (score >= perfect)        msg = '🌟 ¡Puntuación perfecta! ¡Eres increíble!';
+    else if (score >= perfect * 0.75) msg = '🎯 ¡Excelente trabajo!';
+    else if (score >= perfect * 0.5)  msg = '👍 ¡Buen esfuerzo! Sigue practicando.';
+    else                              msg = '💪 ¡Sigue intentándolo, tú puedes!';
+    document.getElementById('winMsg').textContent = msg;
+
+    toast('🏆 ¡Completaste el juego!', 'win', 4000);
+}
+
+// ══════════════════════════════════════════════════════
+//  RESET
+// ══════════════════════════════════════════════════════
+function resetGame() {
+    score    = 0; attempts = 0; bonusHit = 0;
+    flipped  = []; matched = new Set();
+    isLocked = false; pendingBonusIdx = null;
+    clearInterval(timerInterval);
+
+    document.getElementById('board').style.display    = '';
+    document.querySelector('.controls').style.display = '';
+    document.getElementById('progress').parentElement.style.display = '';
+    document.getElementById('winScreen').classList.remove('show');
+    document.getElementById('helpBox').style.display  = 'none';
+    document.getElementById('modalOverlay').classList.remove('show');
+
+    buildCards();
+    render();
+}
+
+function toggleHelp() {
+    const b = document.getElementById('helpBox');
+    b.style.display = b.style.display === 'none' ? 'block' : 'none';
+}
+
+// ── INICIO ──
+buildCards();
+render();
+</script>
+</body>
+</html>
