@@ -124,6 +124,69 @@
         .toast.win   { border-color: var(--gold);   color: var(--gold); font-size: 1.3rem; }
         .toast.bonus { border-color: var(--purple); color: var(--purple); }
 
+        /* ── SABÍAS QUE popup ── */
+        .sabiasque {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(120px);
+            z-index: 400;
+            max-width: 480px;
+            width: calc(100% - 32px);
+            background: #0e1f2e;
+            border: 1px solid rgba(0,180,216,0.45);
+            border-radius: 18px;
+            padding: 18px 20px 16px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,180,216,0.1);
+            opacity: 0;
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+            pointer-events: none;
+        }
+        .sabiasque.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .sabiasque-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .sabiasque-tag {
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--teal);
+            background: rgba(0,180,216,0.12);
+            border: 1px solid rgba(0,180,216,0.3);
+            padding: 3px 10px;
+            border-radius: 50px;
+        }
+        .sabiasque-close {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 6px;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+        .sabiasque-close:hover { color: var(--text); }
+        .sabiasque-body {
+            font-size: 0.9rem;
+            color: #c8e6f5;
+            line-height: 1.6;
+        }
+        .sabiasque-body .sq-emoji {
+            font-size: 1.15rem;
+            margin-right: 4px;
+        }
+
         /* ── CONTROLES ── */
         .controls {
             display: flex;
@@ -417,6 +480,15 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- ══ SABÍAS QUE popup ══ -->
+<div class="sabiasque" id="sabiasque">
+  <div class="sabiasque-header">
+    <span class="sabiasque-tag">💡 Sabías que…</span>
+    <button class="sabiasque-close" onclick="closeSabiasque()">✕</button>
+  </div>
+  <div class="sabiasque-body" id="sabiasqueBody"></div>
+</div>
+
 <!-- ══ MODAL BONUS ══ -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
@@ -692,6 +764,7 @@ function checkPair() {
         document.querySelector(`.card[data-idx="${i2}"]`).classList.add('matched');
         flipped = []; isLocked = false;
         updateStats();
+        maybeTriggerSQ();
         checkWin();
     } else {
         score = Math.max(0, score - 2);
@@ -851,6 +924,9 @@ function resetGame() {
     flipped  = []; matched = new Set();
     isLocked = false; pendingBonusIdx = null;
     clearInterval(timerInterval);
+    sqMatchesShown = new Set();
+    closeSabiasque();
+    shuffleSQ();
 
     document.getElementById('board').style.display    = '';
     document.querySelector('.controls').style.display = '';
@@ -868,7 +944,67 @@ function toggleHelp() {
     b.style.display = b.style.display === 'none' ? 'block' : 'none';
 }
 
+// ══════════════════════════════════════════════════════
+//  SABÍAS QUE
+// ══════════════════════════════════════════════════════
+const SABIASQUE_NOTES = [
+    {
+        emoji: '🧠',
+        text: '<span class="sq-emoji">🧠</span><strong>¡La psicología positiva NO es ignorar las emociones negativas!</strong> No se trata de "ser feliz todo el tiempo", sino de entender y gestionar emociones como la tristeza, el enojo o el miedo.'
+    },
+    {
+        emoji: '💬',
+        text: '<span class="sq-emoji">💬</span><strong>¡La psicología positiva NO es pensamiento mágico!</strong> No basta con desear cosas buenas; también implica acciones, hábitos y trabajo personal basado en evidencia científica.'
+    },
+    {
+        emoji: '📉',
+        text: '<span class="sq-emoji">📉</span><strong>¡La psicología positiva NO niega los problemas!</strong> Al contrario, busca desarrollar herramientas para enfrentarlos mejor, no evitarlos ni ignorarlos.'
+    },
+];
+
+let sqNoteIndex      = 0;           // siguiente nota a mostrar
+let sqNoteOrder      = [];          // orden aleatorio de notas
+let sqTimer          = null;        // intervalo de aparición
+let sqHideTimer      = null;        // auto-cierre
+let sqMatchesShown   = new Set();   // en qué nro de pareja apareció cada nota
+const SQ_EVERY       = 3;          // mostrar cada N parejas encontradas
+
+function shuffleSQ() {
+    sqNoteOrder = [0, 1, 2].sort(() => Math.random() - 0.5);
+    sqNoteIndex = 0;
+}
+
+function triggerSabiasque() {
+    if (sqNoteIndex >= sqNoteOrder.length) return;
+    const note = SABIASQUE_NOTES[ sqNoteOrder[sqNoteIndex] ];
+    sqNoteIndex++;
+
+    document.getElementById('sabiasqueBody').innerHTML = note.text;
+    const el = document.getElementById('sabiasque');
+    el.classList.add('show');
+
+    clearTimeout(sqHideTimer);
+    sqHideTimer = setTimeout(closeSabiasque, 7000); // auto-cierre 7s
+}
+
+function closeSabiasque() {
+    document.getElementById('sabiasque').classList.remove('show');
+    clearTimeout(sqHideTimer);
+}
+
+// Se llama cada vez que se completa una pareja exitosa
+function maybeTriggerSQ() {
+    const pairsFound = matched.size / 2;
+    // Mostrar en la pareja nro SQ_EVERY, 2*SQ_EVERY, 3*SQ_EVERY
+    if (pairsFound > 0 && pairsFound % SQ_EVERY === 0 && !sqMatchesShown.has(pairsFound)) {
+        sqMatchesShown.add(pairsFound);
+        // Pequeño delay para que el toast de "correcto" se vea primero
+        setTimeout(triggerSabiasque, 1200);
+    }
+}
+
 // ── INICIO ──
+shuffleSQ();
 buildCards();
 render();
 </script>
